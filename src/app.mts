@@ -11,7 +11,7 @@ const app = express();
 const server = createServer(app);
 
 // 初始化WebSocket服务
-WebSocketServer.getInstance(server);
+const wsServer = WebSocketServer.getInstance(server);
 
 // 中间件
 app.use(cors());
@@ -34,4 +34,6 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 
 server.listen(config.server.port, () => {
     console.log(`服务器运行在端口 ${config.server.port}`);
-}); 
+});
+
+export default app; 

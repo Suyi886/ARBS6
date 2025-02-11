@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { config } from '../config';
+import * as jwt from 'jsonwebtoken';
+import { config } from '../config/index.js';
 
 interface AuthRequest extends Request {
     user?: {
@@ -10,7 +10,7 @@ interface AuthRequest extends Request {
     }
 }
 
-export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
@@ -22,7 +22,7 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
 
     try {
         const decoded = jwt.verify(token, config.server.jwtSecret);
-        req.user = decoded as typeof req.user;
+        (req as AuthRequest).user = decoded as typeof (req as AuthRequest).user;
         next();
     } catch (error) {
         return res.status(401).json({

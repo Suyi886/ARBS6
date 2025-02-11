@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev:server": "cross-env NODE_ENV=development nodemon",
+    "dev:server": "cross-env NODE_ENV=development tsx watch src/app.ts",
     "dev:client": "vite",
     "build": "vue-tsc && vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "dev": "NODE_ENV=development ts-node --esm src/app.ts"
   },
   "dependencies": {
     "axios": "^1.7.9",
@@ -33,14 +34,13 @@
     "@types/multer": "^1.4.10",
     "@types/node": "^20.9.2",
     "@types/uuid": "^9.0.7",
-    "@types/vue": "^3.0.0",
-    "@types/vue-router": "^4.0.0",
     "@types/ws": "^8.5.9",
     "@vitejs/plugin-vue": "^4.5.0",
     "cross-env": "^7.0.3",
     "nodemon": "^3.0.1",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
     "vite": "^5.0.0",
     "vue-tsc": "^1.8.22"
   }
