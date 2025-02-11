@@ -3,7 +3,7 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { WebSocketServer } from './utils/websocket.js';
 import authRoutes from './routes/auth.routes.js';
-import orderRoutes from './routes/order.routes.js';
+import router from './routes/order.routes';
 import statsRoutes from './routes/stats.routes.js';
 import { config } from './config/index.js';
 
@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // 路由
 app.use('/api/auth', authRoutes);
-app.use('/api/orders', orderRoutes);
+app.use('/api/orders', router);
 app.use('/api/stats', statsRoutes);
 
 // 错误处理

@@ -10,6 +10,12 @@ interface AuthRequest extends Request {
     }
 }
 
+interface JwtPayload {
+    id: string;
+    username: string;
+    role: string;
+}
+
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     const token = req.headers.authorization?.split(' ')[1];
 
@@ -22,7 +28,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 
     try {
         const decoded = jwt.verify(token, config.server.jwtSecret);
-        (req as AuthRequest).user = decoded as typeof (req as AuthRequest).user;
+        (req as AuthRequest).user = decoded as JwtPayload;
         next();
     } catch (error) {
         return res.status(401).json({
