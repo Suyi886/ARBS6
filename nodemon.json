@@ -1,0 +1,6 @@
+{
+  "watch": ["src"],
+  "ext": "mts",
+  "ignore": ["src/client/**/*"],
+  "exec": "node --no-warnings --loader ts-node/esm src/app.mts"
+} 

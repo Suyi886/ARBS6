@@ -1,17 +1,17 @@
 import axios from 'axios';
+import { useUserStore } from '../stores/user';
 
 // 创建axios实例
-export const api = axios.create({
-    baseURL: import.meta.env.VITE_APP_API_BASE_URL,
-    timeout: 10000
+const instance = axios.create({
+    baseURL: '/api'
 });
 
 // 请求拦截器
-api.interceptors.request.use(
+instance.interceptors.request.use(
     config => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        const userStore = useUserStore();
+        if (userStore.token) {
+            config.headers.Authorization = `Bearer ${userStore.token}`;
         }
         return config;
     },
@@ -21,11 +21,12 @@ api.interceptors.request.use(
 );
 
 // 响应拦截器
-api.interceptors.response.use(
+instance.interceptors.response.use(
     response => response,
     error => {
         if (error.response?.status === 401) {
-            localStorage.removeItem('token');
+            const userStore = useUserStore();
+            userStore.logout();
             window.location.href = '/login';
         }
         return Promise.reject(error);
@@ -34,17 +35,10 @@ api.interceptors.response.use(
 
 // 认证相关API
 export const authApi = {
-    login: (data: {
-        username: string;
-        password: string;
-    }) => api.post('/auth/login', data),
-
-    getUserInfo: () => api.get('/auth/user'),
-
-    changePassword: (data: {
-        oldPassword: string;
-        newPassword: string;
-    }) => api.post('/auth/change-password', data)
+    login: (data: { username: string; password: string }) => 
+        instance.post('/auth/login', data),
+    getUserInfo: () => 
+        instance.get('/auth/user')
 };
 
 // 订单相关API
@@ -55,15 +49,10 @@ export const orderApi = {
         amount: number;
         imageUrl: string;
         remark?: string;
-    }) => api.post('/orders/recharge', data),
+    }) => instance.post('/orders/recharge', data),
 
-    getRechargeOrders: (params: {
-        page?: number;
-        pageSize?: number;
-        status?: number;
-        startDate?: string;
-        endDate?: string;
-    }) => api.get('/orders/recharge', { params }),
+    getRechargeOrders: (params: any) => 
+        instance.get('/orders/recharge', { params }),
 
     // 提现订单
     createWithdraw: (data: {
@@ -73,20 +62,19 @@ export const orderApi = {
         bankCardNo: string;
         amount: number;
         remark?: string;
-    }) => api.post('/orders/withdraw', data),
+    }) => instance.post('/orders/withdraw', data),
 
-    getWithdrawOrders: (params: {
-        page?: number;
-        pageSize?: number;
-        status?: number;
-        startDate?: string;
-        endDate?: string;
-    }) => api.get('/orders/withdraw', { params }),
+    getWithdrawOrders: (params: any) => 
+        instance.get('/orders/withdraw', { params }),
 
     // 更新订单状态
-    updateStatus: (data: {
-        orderNo: string;
-        status: number;
-        remark?: string;
-    }) => api.post('/orders/status', data)
+    updateStatus: (data: { orderNo: string; status: number; remark?: string }) => 
+        instance.post('/orders/update-status', data)
+};
+
+export const statsApi = {
+    getDashboard: () => 
+        instance.get('/stats/dashboard'),
+    getStatistics: (params: { startDate: string; endDate: string }) => 
+        instance.get('/stats/report', { params })
 }; 

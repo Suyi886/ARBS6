@@ -1,11 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
-import { WebSocketServer } from './utils/websocket';
-import authRoutes from './routes/auth.routes';
-import orderRoutes from './routes/order.routes';
-import statsRoutes from './routes/stats.routes';
-import { config } from './config';
+import { WebSocketServer } from './utils/websocket.mjs';
+import authRoutes from './routes/auth.routes.mjs';
+import orderRoutes from './routes/order.routes.mjs';
+import statsRoutes from './routes/stats.routes.mjs';
+import { config } from './config/index.mjs';
 
 const app = express();
 const server = createServer(app);

@@ -1,4 +1,5 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
+import type { RouteRecordRaw } from 'vue-router';
 import { useUserStore } from '../stores/user';
 
 const routes: RouteRecordRaw[] = [
@@ -10,47 +11,36 @@ const routes: RouteRecordRaw[] = [
     },
     {
         path: '/',
-        component: () => import('../layouts/DefaultLayout.vue'),
+        component: () => import('../layouts/AdminLayout.vue'),
         meta: { requiresAuth: true },
         children: [
-            // 客户端路由
             {
                 path: '',
-                name: 'Home',
-                component: () => import('../views/Home.vue')
+                redirect: '/admin/dashboard'
             },
             {
-                path: 'recharge',
-                name: 'Recharge',
-                component: () => import('../components/RechargeOrder.vue')
+                path: 'admin/dashboard',
+                name: 'Dashboard',
+                component: () => import('../views/admin/Dashboard.vue'),
+                meta: { title: '数据概览' }
             },
             {
-                path: 'withdraw',
-                name: 'Withdraw',
-                component: () => import('../components/WithdrawOrder.vue')
+                path: 'admin/recharge',
+                name: 'RechargeOrders',
+                component: () => import('../views/admin/RechargeOrders.vue'),
+                meta: { title: '充值管理' }
             },
-            // 管理后台路由
             {
-                path: 'admin',
-                component: () => import('../layouts/AdminLayout.vue'),
-                meta: { requiresAdmin: true },
-                children: [
-                    {
-                        path: 'recharge',
-                        name: 'AdminRecharge',
-                        component: () => import('../components/admin/RechargeOrderManage.vue')
-                    },
-                    {
-                        path: 'withdraw',
-                        name: 'AdminWithdraw',
-                        component: () => import('../components/admin/WithdrawOrderManage.vue')
-                    },
-                    {
-                        path: 'statistics',
-                        name: 'Statistics',
-                        component: () => import('../views/admin/Statistics.vue')
-                    }
-                ]
+                path: 'admin/withdraw',
+                name: 'WithdrawOrders',
+                component: () => import('../views/admin/WithdrawOrders.vue'),
+                meta: { title: '提现管理' }
+            },
+            {
+                path: 'admin/statistics',
+                name: 'Statistics',
+                component: () => import('../views/admin/Statistics.vue'),
+                meta: { title: '统计报表' }
             }
         ]
     }
@@ -61,17 +51,24 @@ const router = createRouter({
     routes
 });
 
-// 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
     const userStore = useUserStore();
     
-    if (to.meta.requiresAuth && !userStore.isLoggedIn) {
-        next({ name: 'Login' });
-    } else if (to.meta.requiresAdmin && !userStore.isAdmin) {
-        next({ name: 'Home' });
-    } else {
-        next();
+    document.title = `${to.meta.title || '首页'} - 支付系统`;
+
+    if (to.meta.requiresAuth) {
+        if (!userStore.isLoggedIn) {
+            next('/login');
+            return;
+        }
+
+        if (!await userStore.checkAuth()) {
+            next('/login');
+            return;
+        }
     }
+
+    next();
 });
 
 export default router; 

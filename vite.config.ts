@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import path from 'path';
+import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src/client')
+      '@': resolve(__dirname, 'src')
     }
   },
   server: {
@@ -14,11 +14,9 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
-        changeOrigin: true
-      },
-      '/uploads': {
-        target: 'http://localhost:3000',
-        changeOrigin: true
+        changeOrigin: true,
+        secure: false,
+        ws: true
       }
     }
   }
