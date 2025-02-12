@@ -60,24 +60,16 @@ const router = createRouter({
     routes
 });
 
-router.beforeEach(async (to, from, next) => {
-    const userStore = useUserStore();
+router.beforeEach((to, from, next) => {
+    const isAuthenticated = localStorage.getItem('token');
     
-    document.title = `${to.meta.title || '首页'} - 支付系统`;
-
-    if (to.meta.requiresAuth) {
-        if (!userStore.isLoggedIn) {
-            next('/login');
-            return;
-        }
-
-        if (!await userStore.checkAuth()) {
-            next('/login');
-            return;
-        }
+    if (to.meta.requiresAuth && !isAuthenticated) {
+        next('/login');
+    } else if (to.path === '/login' && isAuthenticated) {
+        next('/');
+    } else {
+        next();
     }
-
-    next();
 });
 
 export default router; 
