@@ -38,14 +38,23 @@
                         <el-breadcrumb-item>管理后台</el-breadcrumb-item>
                         <el-breadcrumb-item>{{ route.meta.title }}</el-breadcrumb-item>
                     </el-breadcrumb>
-                    <div class="user-info">
-                        <span>{{ userStore.userInfo?.username }}</span>
-                        <el-dropdown @command="handleCommand">
-                            <el-button icon="Setting" circle />
+                    <div class="user-menu">
+                        <el-dropdown trigger="click">
+                            <span class="user-dropdown">
+                                {{ userStore.userInfo?.username }}
+                                <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                            </span>
                             <template #dropdown>
                                 <el-dropdown-menu>
-                                    <el-dropdown-item command="password">修改密码</el-dropdown-item>
-                                    <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                                    <el-dropdown-item @click="goToUserCenter">
+                                        <el-icon><user /></el-icon>个人中心
+                                    </el-dropdown-item>
+                                    <el-dropdown-item @click="showChangePassword">
+                                        <el-icon><key /></el-icon>修改密码
+                                    </el-dropdown-item>
+                                    <el-dropdown-item divided @click="handleLogout">
+                                        <el-icon><switch-button /></el-icon>退出登录
+                                    </el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>
                         </el-dropdown>
@@ -66,7 +75,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '../stores/user';
 import { 
     DataLine, Money, Wallet, 
-    TrendCharts, Setting 
+    TrendCharts, ArrowDown, User, Key, SwitchButton 
 } from '@element-plus/icons-vue';
 
 const route = useRoute();
@@ -75,12 +84,20 @@ const userStore = useUserStore();
 const loading = ref(false);
 
 const handleCommand = (command: string) => {
-    if (command === 'password') {
-        // TODO: 实现修改密码功能
-    } else if (command === 'logout') {
-        userStore.logout();
-        router.push('/login');
-    }
+    // 移除未使用的函数
+};
+
+const goToUserCenter = () => {
+    router.push('/user-center');
+};
+
+const showChangePassword = () => {
+    router.push('/change-password');
+};
+
+const handleLogout = async () => {
+    await userStore.logout();
+    router.push('/login');
 };
 </script>
 
@@ -115,10 +132,27 @@ const handleCommand = (command: string) => {
     align-items: center;
 }
 
-.user-info {
+.user-menu {
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+.user-dropdown {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #409EFF;
+}
+
+.el-dropdown-menu {
+    padding: 5px;
+}
+
+.el-dropdown-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .el-main {

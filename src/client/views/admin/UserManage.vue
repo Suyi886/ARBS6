@@ -137,6 +137,12 @@
                 </el-button>
             </template>
         </el-dialog>
+
+        <div class="user-options">
+            <router-link to="/user-center">个人中心</router-link>
+            <router-link to="/change-password">修改密码</router-link>
+            <router-link to="/logout">退出登录</router-link>
+        </div>
     </div>
 </template>
 
@@ -366,5 +372,12 @@ onMounted(() => {
 
 h2 {
     margin: 0;
+}
+
+.user-options {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
 }
 </style> 
