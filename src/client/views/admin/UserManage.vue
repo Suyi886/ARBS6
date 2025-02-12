@@ -1,48 +1,52 @@
 <template>
-    <el-card>
-        <template #header>
-            <div class="card-header">
-                <span>用户管理</span>
-                <el-button type="primary" @click="showCreateDialog">
-                    创建用户
-                </el-button>
-            </div>
-        </template>
+    <div class="user-manage">
+        <div class="header">
+            <h2>用户管理</h2>
+            <el-button type="primary" @click="showCreateDialog">
+                创建用户
+            </el-button>
+        </div>
 
-        <!-- 用户列表 -->
-        <el-table :data="users" border style="width: 100%">
+        <el-table :data="users" style="width: 100%" v-loading="loading">
             <el-table-column prop="id" label="ID" width="80" />
-            <el-table-column prop="username" label="用户名" width="150" />
+            <el-table-column prop="username" label="用户名" width="120" />
             <el-table-column prop="role" label="角色" width="100">
                 <template #default="{ row }">
-                    <el-tag :type="row.role === 'admin' ? 'danger' : 'info'">
+                    <el-tag :type="row.role === 'admin' ? 'danger' : 'success'">
                         {{ row.role === 'admin' ? '管理员' : '普通用户' }}
                     </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column prop="created_at" label="创建时间" width="180" />
-            <el-table-column prop="updated_at" label="更新时间" width="180" />
-            <el-table-column label="操作" width="250" fixed="right">
+            <el-table-column prop="created_at" label="创建时间" width="180">
+                <template #default="{ row }">
+                    {{ formatDate(row.created_at) }}
+                </template>
+            </el-table-column>
+            <el-table-column prop="updated_at" label="更新时间" width="180">
+                <template #default="{ row }">
+                    {{ formatDate(row.updated_at) }}
+                </template>
+            </el-table-column>
+            <el-table-column label="操作" width="300">
                 <template #default="{ row }">
                     <el-button-group>
                         <el-button 
                             type="primary" 
-                            size="small"
-                            @click="showChangePasswordDialog(row)"
-                        >
-                            修改密码
-                        </el-button>
-                        <el-button 
-                            :type="row.role === 'admin' ? 'warning' : 'success'"
-                            size="small"
-                            @click="handleRoleChange(row)"
+                            @click="handleChangeRole(row)"
+                            :disabled="row.id === userStore.userInfo?.id"
                         >
                             {{ row.role === 'admin' ? '取消管理员' : '设为管理员' }}
                         </el-button>
                         <el-button 
+                            type="warning"
+                            @click="showPasswordDialog(row)"
+                        >
+                            修改密码
+                        </el-button>
+                        <el-button 
                             type="danger" 
-                            size="small"
                             @click="handleDelete(row)"
+                            :disabled="row.id === userStore.userInfo?.id"
                         >
                             删除
                         </el-button>
@@ -53,232 +57,294 @@
 
         <!-- 创建用户对话框 -->
         <el-dialog
-            v-model="createDialog.visible"
+            v-model="createDialogVisible"
             title="创建用户"
-            width="400px"
+            width="500px"
         >
-            <el-form
+            <el-form 
                 ref="createFormRef"
-                :model="createDialog.form"
-                :rules="createDialog.rules"
-                label-width="80px"
+                :model="createForm"
+                :rules="createRules"
+                label-width="100px"
             >
                 <el-form-item label="用户名" prop="username">
-                    <el-input v-model="createDialog.form.username" />
+                    <el-input v-model="createForm.username" />
                 </el-form-item>
                 <el-form-item label="密码" prop="password">
                     <el-input 
-                        v-model="createDialog.form.password"
-                        type="password"
+                        v-model="createForm.password" 
+                        type="password" 
+                        show-password
+                    />
+                </el-form-item>
+                <el-form-item label="确认密码" prop="confirmPassword">
+                    <el-input 
+                        v-model="createForm.confirmPassword" 
+                        type="password" 
                         show-password
                     />
                 </el-form-item>
                 <el-form-item label="角色">
-                    <el-radio-group v-model="createDialog.form.role">
+                    <el-radio-group v-model="createForm.role">
                         <el-radio label="user">普通用户</el-radio>
                         <el-radio label="admin">管理员</el-radio>
                     </el-radio-group>
                 </el-form-item>
             </el-form>
             <template #footer>
-                <el-button @click="createDialog.visible = false">取消</el-button>
-                <el-button type="primary" @click="handleCreate">确认</el-button>
+                <el-button @click="createDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="handleCreate" :loading="creating">
+                    创建
+                </el-button>
             </template>
         </el-dialog>
 
         <!-- 修改密码对话框 -->
         <el-dialog
-            v-model="passwordDialog.visible"
+            v-model="passwordDialogVisible"
             title="修改密码"
-            width="400px"
+            width="500px"
         >
-            <el-form
+            <el-form 
                 ref="passwordFormRef"
-                :model="passwordDialog.form"
-                :rules="passwordDialog.rules"
+                :model="passwordForm"
+                :rules="passwordRules"
                 label-width="100px"
             >
-                <el-form-item label="新密码" prop="newPassword">
-                    <el-input
-                        v-model="passwordDialog.form.newPassword"
-                        type="password"
+                <el-form-item label="新密码" prop="password">
+                    <el-input 
+                        v-model="passwordForm.password" 
+                        type="password" 
                         show-password
                     />
                 </el-form-item>
-                <el-form-item label="确认新密码" prop="confirmPassword">
-                    <el-input
-                        v-model="passwordDialog.form.confirmPassword"
-                        type="password"
+                <el-form-item label="确认密码" prop="confirmPassword">
+                    <el-input 
+                        v-model="passwordForm.confirmPassword" 
+                        type="password" 
                         show-password
                     />
                 </el-form-item>
             </el-form>
             <template #footer>
-                <el-button @click="passwordDialog.visible = false">取消</el-button>
-                <el-button type="primary" @click="handleChangePassword">确认</el-button>
+                <el-button @click="passwordDialogVisible = false">取消</el-button>
+                <el-button 
+                    type="primary" 
+                    @click="handleChangePassword" 
+                    :loading="changingPassword"
+                >
+                    确认
+                </el-button>
             </template>
         </el-dialog>
-    </el-card>
+    </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import type { FormInstance, FormRules } from 'element-plus';
+import type { FormInstance } from 'element-plus';
 import { userApi } from '../../services/api';
+import { useUserStore } from '../../stores/user';
+import dayjs from 'dayjs';
 
-const users = ref([]);
+const userStore = useUserStore();
+
+// 用户列表数据
+const users = ref<any[]>([]);
+const loading = ref(false);
 
 // 创建用户相关
-const createDialog = ref({
-    visible: false,
-    form: {
-        username: '',
-        password: '',
-        role: 'user'
-    },
-    rules: {
-        username: [
-            { required: true, message: '请输入用户名', trigger: 'blur' },
-            { min: 3, message: '用户名长度不能小于3位', trigger: 'blur' }
-        ],
-        password: [
-            { required: true, message: '请输入密码', trigger: 'blur' },
-            { min: 6, message: '密码长度不能小于6位', trigger: 'blur' }
-        ]
-    } as FormRules
+const createDialogVisible = ref(false);
+const createFormRef = ref<FormInstance>();
+const creating = ref(false);
+const createForm = ref({
+    username: '',
+    password: '',
+    confirmPassword: '',
+    role: 'user'
 });
 
 // 修改密码相关
-const passwordDialog = ref({
-    visible: false,
-    currentUser: null as any,
-    form: {
-        newPassword: '',
-        confirmPassword: ''
-    },
-    rules: {
-        newPassword: [
-            { required: true, message: '请输入新密码', trigger: 'blur' },
-            { min: 6, message: '密码长度不能小于6位', trigger: 'blur' }
-        ],
-        confirmPassword: [
-            { required: true, message: '请确认新密码', trigger: 'blur' },
-            {
-                validator: (rule, value, callback) => {
-                    if (value !== passwordDialog.value.form.newPassword) {
-                        callback(new Error('两次输入的密码不一致'));
-                    } else {
-                        callback();
-                    }
-                },
-                trigger: 'blur'
-            }
-        ]
-    } as FormRules
-});
-
-const createFormRef = ref<FormInstance>();
+const passwordDialogVisible = ref(false);
 const passwordFormRef = ref<FormInstance>();
+const changingPassword = ref(false);
+const passwordForm = ref({
+    userId: '',
+    password: '',
+    confirmPassword: ''
+});
+const currentUser = ref<any>(null);
 
+// 表单验证规则
+const createRules = {
+    username: [
+        { required: true, message: '请输入用户名', trigger: 'blur' },
+        { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
+    ],
+    password: [
+        { required: true, message: '请输入密码', trigger: 'blur' },
+        { min: 6, max: 20, message: '长度在 6 到 20 个字符', trigger: 'blur' }
+    ],
+    confirmPassword: [
+        { required: true, message: '请确认密码', trigger: 'blur' },
+        {
+            validator: (rule: any, value: string, callback: Function) => {
+                if (value !== createForm.value.password) {
+                    callback(new Error('两次输入密码不一致'));
+                } else {
+                    callback();
+                }
+            },
+            trigger: 'blur'
+        }
+    ]
+};
+
+const passwordRules = {
+    password: [
+        { required: true, message: '请输入新密码', trigger: 'blur' },
+        { min: 6, max: 20, message: '长度在 6 到 20 个字符', trigger: 'blur' }
+    ],
+    confirmPassword: [
+        { required: true, message: '请确认新密码', trigger: 'blur' },
+        {
+            validator: (rule: any, value: string, callback: Function) => {
+                if (value !== passwordForm.value.password) {
+                    callback(new Error('两次输入密码不一致'));
+                } else {
+                    callback();
+                }
+            },
+            trigger: 'blur'
+        }
+    ]
+};
+
+// 加载用户列表
 const loadUsers = async () => {
     try {
-        const res = await userApi.getAllUsers();
-        users.value = res.data.data;
+        loading.value = true;
+        const response = await userApi.getAllUsers();
+        users.value = response.data;
     } catch (error) {
+        console.error('Failed to load users:', error);
         ElMessage.error('加载用户列表失败');
+    } finally {
+        loading.value = false;
     }
 };
 
+// 显示创建用户对话框
 const showCreateDialog = () => {
-    createDialog.value.form = {
+    createForm.value = {
         username: '',
         password: '',
+        confirmPassword: '',
         role: 'user'
     };
-    createDialog.value.visible = true;
+    createDialogVisible.value = true;
 };
 
+// 创建用户
 const handleCreate = async () => {
     if (!createFormRef.value) return;
     
-    await createFormRef.value.validate(async (valid) => {
-        if (valid) {
-            try {
-                await userApi.createUser(createDialog.value.form);
-                ElMessage.success('创建成功');
-                createDialog.value.visible = false;
-                loadUsers();
-            } catch (error) {
-                ElMessage.error('创建失败');
-            }
-        }
-    });
-};
-
-const showChangePasswordDialog = (user: any) => {
-    passwordDialog.value.currentUser = user;
-    passwordDialog.value.form = {
-        newPassword: '',
-        confirmPassword: ''
-    };
-    passwordDialog.value.visible = true;
-};
-
-const handleChangePassword = async () => {
-    if (!passwordFormRef.value || !passwordDialog.value.currentUser) return;
-    
-    await passwordFormRef.value.validate(async (valid) => {
-        if (valid) {
-            try {
-                await userApi.changePassword(
-                    passwordDialog.value.currentUser.id,
-                    passwordDialog.value.form.newPassword
-                );
-                ElMessage.success('密码修改成功');
-                passwordDialog.value.visible = false;
-            } catch (error) {
-                ElMessage.error('密码修改失败');
-            }
-        }
-    });
-};
-
-const handleRoleChange = async (user: any) => {
     try {
-        const newRole = user.role === 'admin' ? 'user' : 'admin';
-        await ElMessageBox.confirm(
-            `确认将用户 ${user.username} 的角色改为${newRole === 'admin' ? '管理员' : '普通用户'}？`
-        );
+        await createFormRef.value.validate();
+        creating.value = true;
         
-        await userApi.updateUserRole(user.id, newRole);
-        ElMessage.success('修改成功');
+        await userApi.createUser({
+            username: createForm.value.username,
+            password: createForm.value.password,
+            role: createForm.value.role
+        });
+        
+        ElMessage.success('创建用户成功');
+        createDialogVisible.value = false;
         loadUsers();
-    } catch (error) {
-        if (error !== 'cancel') {
-            ElMessage.error('修改失败');
-        }
+    } catch (error: any) {
+        console.error('Failed to create user:', error);
+        ElMessage.error(error.response?.data?.message || '创建用户失败');
+    } finally {
+        creating.value = false;
     }
 };
 
+// 显示修改密码对话框
+const showPasswordDialog = (user: any) => {
+    currentUser.value = user;
+    passwordForm.value = {
+        userId: user.id,
+        password: '',
+        confirmPassword: ''
+    };
+    passwordDialogVisible.value = true;
+};
+
+// 修改密码
+const handleChangePassword = async () => {
+    if (!passwordFormRef.value || !currentUser.value) return;
+    
+    try {
+        await passwordFormRef.value.validate();
+        changingPassword.value = true;
+        
+        await userApi.changePassword(
+            currentUser.value.id,
+            passwordForm.value.password
+        );
+        
+        ElMessage.success('修改密码成功');
+        passwordDialogVisible.value = false;
+    } catch (error: any) {
+        console.error('Failed to change password:', error);
+        ElMessage.error(error.response?.data?.message || '修改密码失败');
+    } finally {
+        changingPassword.value = false;
+    }
+};
+
+// 修改用户角色
+const handleChangeRole = async (user: any) => {
+    try {
+        const newRole = user.role === 'admin' ? 'user' : 'admin';
+        await userApi.updateUserRole(user.id, newRole);
+        ElMessage.success('修改角色成功');
+        loadUsers();
+    } catch (error: any) {
+        console.error('Failed to update role:', error);
+        ElMessage.error(error.response?.data?.message || '修改角色失败');
+    }
+};
+
+// 删除用户
 const handleDelete = async (user: any) => {
     try {
         await ElMessageBox.confirm(
-            `确认删除用户 ${user.username}？此操作不可恢复！`,
+            `确定要删除用户 "${user.username}" 吗？`,
             '警告',
             {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
                 type: 'warning'
             }
         );
         
         await userApi.deleteUser(user.id);
-        ElMessage.success('删除成功');
+        ElMessage.success('删除用户成功');
         loadUsers();
-    } catch (error) {
+    } catch (error: any) {
         if (error !== 'cancel') {
-            ElMessage.error('删除失败');
+            console.error('Failed to delete user:', error);
+            ElMessage.error(error.response?.data?.message || '删除用户失败');
         }
     }
+};
+
+// 格式化日期
+const formatDate = (date: string) => {
+    return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
 };
 
 onMounted(() => {
@@ -287,9 +353,18 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.card-header {
+.user-manage {
+    padding: 20px;
+}
+
+.header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 20px;
+}
+
+h2 {
+    margin: 0;
 }
 </style> 
