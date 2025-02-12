@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import { config } from '../config';
+import { config } from '../config/index.js';
 
 const pool = mysql.createPool({
     ...config.database,
@@ -14,8 +14,8 @@ export const db = {
             const [rows] = await pool.query(sql, values);
             return [rows];
         } catch (error) {
-            console.error('Database query error:', error);
+            console.error('Database error:', error);
             throw error;
         }
     }
-}; 
+};

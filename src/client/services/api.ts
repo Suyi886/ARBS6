@@ -35,10 +35,11 @@ instance.interceptors.response.use(
 
 // 认证相关API
 export const authApi = {
-    login: (data: { username: string; password: string }) => 
-        instance.post('/auth/login', data),
-    getUserInfo: () => 
-        instance.get('/auth/user')
+    login: (data: { username: string; password: string }) => {
+        console.log('API 登录请求:', data);
+        return instance.post('/auth/login', data);
+    },
+    getUserInfo: () => instance.get('/auth/user')
 };
 
 // 订单相关API
@@ -77,4 +78,25 @@ export const statsApi = {
         instance.get('/stats/dashboard'),
     getStatistics: (params: { startDate: string; endDate: string }) => 
         instance.get('/stats/report', { params })
+};
+
+// 用户管理相关API
+export const userApi = {
+    getAllUsers: () => 
+        instance.get('/users'),
+    
+    createUser: (data: {
+        username: string;
+        password: string;
+        role: string;
+    }) => instance.post('/users', data),
+    
+    updateUserRole: (userId: number, role: string) => 
+        instance.put(`/users/${userId}/role`, { role }),
+    
+    deleteUser: (userId: number) => 
+        instance.delete(`/users/${userId}`),
+    
+    changePassword: (userId: number, newPassword: string) => 
+        instance.put(`/users/${userId}/password`, { newPassword })
 }; 

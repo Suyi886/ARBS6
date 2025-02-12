@@ -41,6 +41,15 @@ const routes: RouteRecordRaw[] = [
                 name: 'Statistics',
                 component: () => import('../views/admin/Statistics.vue'),
                 meta: { title: '统计报表' }
+            },
+            {
+                path: 'admin/users',
+                name: 'UserManage',
+                component: () => import('../views/admin/UserManage.vue'),
+                meta: { 
+                    requiresAuth: true,
+                    title: '用户管理'
+                }
             }
         ]
     }

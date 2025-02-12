@@ -5,6 +5,7 @@ import { WebSocketServer } from './utils/websocket.js';
 import authRoutes from './routes/auth.routes.js';
 import router from './routes/order.routes';
 import statsRoutes from './routes/stats.routes.js';
+import userRoutes from './routes/user.routes.js';
 import { config } from './config/index.js';
 
 // 全局异常处理
@@ -25,12 +26,18 @@ const server = createServer(app);
 const wsServer = WebSocketServer.getInstance(server);
 
 // 中间件
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000', // 前端地址
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // 路由
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/orders', router);
 app.use('/api/stats', statsRoutes);
 

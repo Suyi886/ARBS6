@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { AuthService } from '../services/AuthService';
+import { AuthService } from '../services/AuthService.js';
 
 interface AuthRequest extends Request {
     user?: {
@@ -18,16 +18,27 @@ export class AuthController {
 
     async login(req: Request, res: Response) {
         try {
+            console.log('Login request received:', req.body);
             const { username, password } = req.body;
+            
+            if (!username || !password) {
+                return res.status(400).json({
+                    code: 400,
+                    message: '用户名和密码不能为空'
+                });
+            }
+
             const result = await this.authService.login(username, password);
             
-            res.json({
-                code: 0,
-                data: result
-            });
+            if (result.code === 0) {
+                res.json(result);
+            } else {
+                res.status(401).json(result);
+            }
         } catch (error) {
-            res.status(401).json({
-                code: 401,
+            console.error('Login error:', error);
+            res.status(500).json({
+                code: 500,
                 message: error instanceof Error ? error.message : '登录失败'
             });
         }
@@ -40,11 +51,8 @@ export class AuthController {
                 throw new Error('未登录');
             }
 
-            const user = await this.authService.getUserInfo(userId);
-            res.json({
-                code: 0,
-                data: user
-            });
+            const result = await this.authService.getUserInfo(userId);
+            res.json(result);
         } catch (error) {
             res.status(401).json({
                 code: 401,
