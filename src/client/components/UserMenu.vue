@@ -29,7 +29,7 @@ const router = useRouter();
 const userStore = useUserStore();
 
 const goToUserCenter = () => {
-  router.push('/user-center');
+  router.push('/admin/user-center');
 };
 
 const showChangePassword = () => {

@@ -88,7 +88,7 @@ const handleCommand = (command: string) => {
 };
 
 const goToUserCenter = () => {
-    router.push('/user-center');
+    router.push('/admin/user-center');
 };
 
 const showChangePassword = () => {

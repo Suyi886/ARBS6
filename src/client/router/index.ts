@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import { useUserStore } from '../stores/user';
+import UserCenter from '../views/admin/UserCenter.vue';
 
 const routes: RouteRecordRaw[] = [
     {
@@ -49,6 +50,15 @@ const routes: RouteRecordRaw[] = [
                 meta: { 
                     requiresAuth: true,
                     title: '用户管理'
+                }
+            },
+            {
+                path: 'user-center',
+                name: 'UserCenter',
+                component: UserCenter,
+                meta: {
+                    title: '个人中心',
+                    requiresAuth: true
                 }
             }
         ]
